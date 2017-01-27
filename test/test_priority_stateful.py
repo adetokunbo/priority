@@ -35,5 +35,25 @@ class PriorityQueue(RuleBasedStateMachine):
         except priority.PseudoStreamError:
             assert stream_id == 0
 
+    @rule(seed=st.integers())
+    def block_stream(self, seed):
+        random.seed(seed)
+        stream_id = random.choice(self.stream_ids)
+        note('Blocking stream_id = %s' % stream_id)
+        try:
+            self.tree.block(stream_id)
+        except priority.PseudoStreamError:
+            assert stream_id == 0
+
+    @rule(seed=st.integers())
+    def unblock_stream(self, seed):
+        random.seed(seed)
+        stream_id = random.choice(self.stream_ids)
+        note('Unblocking stream_id = %s' % stream_id)
+        try:
+            self.tree.unblock(stream_id)
+        except priority.PseudoStreamError:
+            assert stream_id == 0
+
 
 TestPriorityQueueStateful = PriorityQueue.TestCase
