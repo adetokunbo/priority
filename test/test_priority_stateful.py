@@ -24,36 +24,39 @@ class PriorityQueue(RuleBasedStateMachine):
             assert stream_id not in self.stream_ids
             self.stream_ids.append(stream_id)
 
-    @rule(seed=st.integers())
-    def remove_stream(self, seed):
-        random.seed(seed)
-        stream_id = random.choice(self.stream_ids)
-        note('Removing stream_id = %s' % stream_id)
+    @rule(stream_id=st.integers())
+    def remove_stream(self, stream_id):
         try:
             self.tree.remove_stream(stream_id)
-            self.stream_ids.remove(stream_id)
+        except priority.MissingStreamError:
+            assert stream_id not in self.stream_ids
         except priority.PseudoStreamError:
             assert stream_id == 0
+        else:
+            assert stream_id in self.stream_ids
+            self.stream_ids.remove(stream_id)
 
-    @rule(seed=st.integers())
-    def block_stream(self, seed):
-        random.seed(seed)
-        stream_id = random.choice(self.stream_ids)
-        note('Blocking stream_id = %s' % stream_id)
+    @rule(stream_id=st.integers())
+    def block_stream(self, stream_id):
         try:
             self.tree.block(stream_id)
+        except priority.MissingStreamError:
+            assert stream_id not in self.stream_ids
         except priority.PseudoStreamError:
             assert stream_id == 0
+        else:
+            assert stream_id in self.stream_ids
 
-    @rule(seed=st.integers())
-    def unblock_stream(self, seed):
-        random.seed(seed)
-        stream_id = random.choice(self.stream_ids)
-        note('Unblocking stream_id = %s' % stream_id)
+    @rule(stream_id=st.integers())
+    def unblock_stream(self, stream_id):
         try:
             self.tree.unblock(stream_id)
+        except priority.MissingStreamError:
+            assert stream_id not in self.stream_ids
         except priority.PseudoStreamError:
             assert stream_id == 0
+        else:
+            assert stream_id in self.stream_ids
 
 
 TestPriorityQueueStateful = PriorityQueue.TestCase
