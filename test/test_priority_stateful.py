@@ -13,6 +13,7 @@ class PriorityQueue(RuleBasedStateMachine):
         super(PriorityQueue, self).__init__()
         self.tree = priority.PriorityTree()
         self.stream_ids = set([0])
+        self.blocked_stream_ids = set()
 
     @rule(stream_id=st.integers())
     def insert_stream(self, stream_id):
@@ -42,10 +43,21 @@ class PriorityQueue(RuleBasedStateMachine):
     @rule(stream_id=st.integers())
     def block_stream(self, stream_id):
         self._run_action(self.tree.block, stream_id)
+        if (stream_id != 0) and (stream_id in self.stream_ids):
+            self.blocked_stream_ids.add(stream_id)
 
     @rule(stream_id=st.integers())
     def unblock_stream(self, stream_id):
         self._run_action(self.tree.unblock, stream_id)
+        self.blocked_stream_ids.discard(stream_id)
+
+    @rule()
+    def tree_advances_unless_all_streams_are_blocked(self):
+        """There is always a next stream unless every stream is blocked."""
+        try:
+            next(self.tree)
+        except priority.DeadlockError:
+            assert len(self.blocked_stream_ids) == len(self.stream_ids) - 1
 
 
 TestPriorityQueueStateful = PriorityQueue.TestCase
